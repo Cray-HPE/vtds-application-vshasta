@@ -121,7 +121,7 @@ class Application(ApplicationAPI):
         }
 
     @staticmethod
-    def __deploy_manifest(connections, manifest):
+    def __deploy_manifest(connections, manifest, python_exe):
         """Copy files to the blades or nodes connected in
         'connections' based on the manifest and run the appropriate
         deployment script(s).
@@ -150,7 +150,7 @@ class Application(ApplicationAPI):
             )
         cmd = (
             "chmod 755 %s;" % deploy_script +
-            "python3 " +
+            "%s " % python_exe +
             "%s " % deploy_script +
             class_name_template +
             home(APP_CONFIG_NAME)
@@ -195,15 +195,17 @@ class Application(ApplicationAPI):
         virtual_blades = self.stack.get_provider_api().get_virtual_blades()
 
         # Deploy the manifests to the virtual nodes and virtual blades.
+        blade_py = self.stack.get_platform_api().get_blade_python_executable()
         for manifest in self.__node_manifests():
             class_names = manifest['class_names']
             node_or_blade = manifest['type']
+            python_exe = "python3" if node_or_blade == 'node' else blade_py
             with (
                     virtual_nodes.ssh_connect_nodes(class_names)
                     if node_or_blade == 'node'
                     else virtual_blades.ssh_connect_blades(class_names)
             ) as connections:
-                self.__deploy_manifest(connections, manifest)
+                self.__deploy_manifest(connections, manifest, python_exe)
 
     def remove(self):
         if not self.prepared:
