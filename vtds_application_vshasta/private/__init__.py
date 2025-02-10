@@ -31,7 +31,9 @@ from os.path import (
 )
 CONFIG_DIR = path_join(dirname(__file__), 'config')
 APP_CONFIG_NAME = 'application_core_config.yaml'
-DEPLOY_SCRIPT_NAME = 'deploy_application_to_node.py'
+NODE_DEPLOY_SCRIPT_NAME = 'deploy_application_to_node.py'
+BLADE_DEPLOY_SCRIPT_NAME = 'deploy_application_to_blade.py'
+COMMON_DEPLOY_LIB_NAME = 'deploy_application_common.py'
 SCRIPT_DIR_PATH = path_join(
     dirname(__file__),
     'scripts',

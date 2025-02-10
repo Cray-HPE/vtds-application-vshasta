@@ -34,7 +34,9 @@ from vtds_base import (
 from vtds_base.layers.application import ApplicationAPI
 from . import (
     APP_CONFIG_NAME,
-    DEPLOY_SCRIPT_NAME,
+    NODE_DEPLOY_SCRIPT_NAME,
+    BLADE_DEPLOY_SCRIPT_NAME,
+    COMMON_DEPLOY_LIB_NAME,
     script,
     home
 )
@@ -72,13 +74,18 @@ class Application(ApplicationAPI):
             'class_names': ['pit_node'],
             'files': [
                 (
-                    script(DEPLOY_SCRIPT_NAME),
-                    home(DEPLOY_SCRIPT_NAME),
+                    script(NODE_DEPLOY_SCRIPT_NAME),
+                    home(NODE_DEPLOY_SCRIPT_NAME),
                     'node-deploy'
+                ),
+                (
+                    script(COMMON_DEPLOY_LIB_NAME),
+                    home(COMMON_DEPLOY_LIB_NAME),
+                    'common-deploy'
                 ),
                 (self.app_config_path, home(APP_CONFIG_NAME), 'config'),
             ],
-            'script': path_join(os.sep, 'root', DEPLOY_SCRIPT_NAME),
+            'script': path_join(os.sep, 'root', NODE_DEPLOY_SCRIPT_NAME),
         }
         virtual_blades = self.stack.get_provider_api().get_virtual_blades()
         blade_manifest = {
@@ -86,13 +93,18 @@ class Application(ApplicationAPI):
             'class_names': virtual_blades.blade_classes(),
             'files': [
                 (
-                    script(DEPLOY_SCRIPT_NAME),
-                    home(DEPLOY_SCRIPT_NAME),
+                    script(BLADE_DEPLOY_SCRIPT_NAME),
+                    home(BLADE_DEPLOY_SCRIPT_NAME),
                     'node-deploy'
+                ),
+                (
+                    script(COMMON_DEPLOY_LIB_NAME),
+                    home(COMMON_DEPLOY_LIB_NAME),
+                    'common-deploy'
                 ),
                 (self.app_config_path, home(APP_CONFIG_NAME), 'config'),
             ],
-            'script': path_join(os.sep, 'root', DEPLOY_SCRIPT_NAME),
+            'script': path_join(os.sep, 'root', BLADE_DEPLOY_SCRIPT_NAME),
         }
         return [
             pit_node_manifest,

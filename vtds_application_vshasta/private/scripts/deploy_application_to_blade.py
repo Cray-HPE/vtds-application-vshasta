@@ -23,10 +23,6 @@
 """Deployment script for setting up Virtual Shasta on nodes
 
 """
-import os
-from os.path import (
-    join as path_join
-)
 from deploy_application_common import (
     UsageError,
     read_config,
@@ -35,28 +31,8 @@ from deploy_application_common import (
     entrypoint,
 )
 
-VENV_PATH = path_join(os.sep, "root", "venv")
-PYTHON = path_join(VENV_PATH, "bin", "python3")
 
-
-def create_venv():
-    """Make a virtual environment for python to run in...
-
-    """
-    # do the import here because we can't do it at the top of the file
-    # since the package hasn't been installed until we get the debian
-    # packages installed.
-    #
-    # pylint: disable=import-outside-toplevel
-    from venv import EnvBuilder
-    EnvBuilder(
-        system_site_packages=False,
-        clear=True,
-        symlinks=False,
-        upgrade=False,
-        with_pip=True,
-        prompt=None
-    ).create(VENV_PATH)
+PYTHON = "python3"
 
 
 def main(argv):
@@ -76,7 +52,6 @@ def main(argv):
     config = read_config(argv[1])
     add_hosts(config)
     install_deb_packages(config)
-    create_venv()
 
 
 if __name__ == '__main__':
