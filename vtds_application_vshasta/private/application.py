@@ -178,7 +178,7 @@ class Application(ApplicationAPI):
         )
 
     def consolidate(self):
-        pass
+        return
 
     def prepare(self):
         virtual_nodes = self.stack.get_cluster_api().get_virtual_nodes()
