@@ -177,6 +177,9 @@ class Application(ApplicationAPI):
             cmd, "run-%s-app-deploy-script-on" % target_type
         )
 
+    def consolidate(self):
+        pass
+
     def prepare(self):
         virtual_nodes = self.stack.get_cluster_api().get_virtual_nodes()
         node_classes = virtual_nodes.node_classes()
