@@ -1,8 +1,121 @@
 application:
+  # Cluster Geometry Information
+  geometry:
+    cabinets:
+      # vShasta does not support Mountain cabinets.
+      mountain:
+        count: 0
+      # vShasta supports a limited simulation of River cabinets.
+      river:
+        count: 2
+        starting_id: 3000
+        # To keep things simple, the contents of cabinets are the
+        # same. Some number of chassis per cabinet with some set of
+        # switches per cabinet configured the same way for each cabinet.
+        chassis:
+          count: 1
+          starting_id: 0
+        # Describe the blade contents for a cabinet by chassis. By
+        # default, there is an assumption that the vShasta config
+        # contains 5 blade classes that host nodes as follows:
+        #
+        #    k8s-mgmt-blade: PIT and K8s Master Nodes
+        #    k8s-worker-blade: K8s Worker Nodes
+        #    storage-blade: Storage Node
+        #    compute-blade: Compute Nodes
+        #    user-blade: Application Nodes
+        #
+        # If your other layer configurations for vShasta deviate from
+        # the above, then the configuration here will need to be
+        # overridden to accommodate your configuration.
+        #
+        # As noted above, by default a vShasta system has two cabinets
+        # each with a single chassis. The first cabinet contains all of
+        # the management blades  / nodes. The second cabinet contains
+        # all of the Compute and Application blades / nodes. We assume a
+        # maximum configuration of 16 of each kind of node. This
+        # configuration then gives us a maximum of 48 blades in
+        # the first cabinet and 32 blades in the second cabinet assuming
+        # one node per blade (plus the PIT node on the first K8s
+        # managment blade).
+        #
+        # NOTE: When filling up a chassis, it is essential that every
+        #       blade of a listed blade class fit into the cabinet to
+        #       which the blade class is assigned. The vShasta code does
+        #       not know how to split instances of a blade class across
+        #       more than one chassis.
+        blade_classes:
+          3000:  # Cabinet
+            0:   # Chassis Number
+              - k8s-mgmt-blade
+              - k8s-worker-blade
+              - storage-blade
+          3001:  # Cabinet
+            0:   # Chassis Number
+              - compute-blade
+              - user-blade
+        # While vShasta does not yet support switches, CSI wants to have
+        # switch information in the seed files it uses to set up the
+        # system. The following describes the switch types and placement
+        # in each chassis (one chassis per cabinet) for the sake of
+        # composing the seed files. If vShasta ever implements some kind
+        # of virtual switch, then this would need to be changed to match
+        # that implementation.
+        switches:
+          leaf:
+            type: leafBMC
+            brand: Aruba
+            model: 8325
+            shelves:
+              - 60
+          spine:
+            type: Spine
+            brand: Aruba
+            model: 6300M
+            shelves:
+              - 61
+              - 62
+      # vShasta does not support Hill cabinets.
+      hill:
+        count:0
+  # CSM version and settings
+  csm:
+    # CSM Version of the form <major>.<minor>.<patch>-<labels> which
+    # identifies both the CSM version and can be used to construct the
+    # version specific portion of the path to the release tarball in the
+    # source repository. Default is 1.6.0. Override this for different
+    # CSM versions.
+    version: 1.6.0
+    # The version independent portion of the URL to the repository
+    # where the CSM source tarball can be found. This will be
+    # concatenated to a version specific string of the form
+    #
+    #    /<major>.<minor>.csm-<version>.tar.gz
+    #
+    # To form the full URL. For example, for the default 1.6.0 version,
+    # that string would be '/1.6/csm-1.6.0.tar.gz'.
+    source: https://artifactory.algol60.net/artifactory/releases/csm
+    k8s:
+      # 'weave' or 'cilium'
+      k8s_primary_cni: weave
+      # 'strict', 'partial', or 'disabled' 
+      cilium_kube_proxy_replacement: disabled
+  # Configuration of the simulated BMCs on the blades (RedFish, IPMI,
+  # other?).
+  bmc:
+    bmc_user: root    # Use for IPMI and Redfish
+    bmc_passwd: null  # Use for IPMI and RedFish (set during consolidate)
+    redfish:
+      # The port where the BMC listens for RedFish queries
+      listening_port: 8080 
+    ipmi:
+      starting_port: 6230
+
   # The list of Debian packages to be installed on nodes where the
   # application deployment script runs.
   debian_packages:
     - python3-venv
+
   # The list of pip installable python packages to be installed into a
   # virtual environment on nodes where the application deployment
   # script runs.
@@ -16,3 +129,305 @@ application:
 #      - daemonize~=2.5
 #      - flask~=3.0
 #      - requests~=2.32
+  # The 'seed_files' section contains the configuration used to build
+  # the seed files used by CSI. Some of this content is overwritten by
+  # the 'consolidate' stage of the application and contains settings
+  # derived from other layers (network information and so forth). Those
+  # items are set to null and commented. The rest of the settings are,
+  # unless otherwise noted in the comments, available for modification
+  # by configuration overlays.
+  seed_files:
+    system_config:
+      # system_config.yaml
+      #
+      # Name of the application node config file
+      application-node-config-yaml: application_node_config.yaml
+      # BGP information is used for talking with switches which we don't
+      # have, it is unused for now.
+      bgp-asn: "65533"
+      bgp-chn-asn: "65530"
+      bgp-cmn-asn: "65532"
+      bgp-nmn-asn: "65531"
+      bgp-peer-types:
+          - spine
+      bgp-peers: spine
+      # Selector for CAN or CHN as the Customer Access Network
+      bican-user-network-name: CAN
+      # The username and password for access to BMCs. These come from
+      # the 'bmc' config above during 'consolidate'
+      bootstrap-ncn-bmc-pass: null
+      bootstrap-ncn-bmc-user: null
+
+      # The name of the cabinets configuration file
+      cabinets-yaml: "cabinets.yaml"
+      # The VLAN id that the CAN runs over.
+      can-bootstrap-vlan: "6"
+      # CAN parameters. The CIDR is taken from the Virtual Network
+      # configuration during 'consolidate'. The rest are application defined
+      # but must be composed to match the CIDR if appropriate.
+      can-cidr: null       # Network CIDR set by 'consolidate'
+      can-gateway: 10.103.5.129
+      can-gw: null         # Alias of can-gateway, populated by 'consolidate'
+      can-dynamic-pool: 10.103.5.160/27
+      can-static-pool: ""
+      # The following three items are not used, but kept, minimally, in
+      # case someone looks for them.
+      ceph-cephfs-image: ""
+      ceph-rbd-image: ""
+      chart-repo: ""
+      # CHN parameters. The CIDR is taken from the Virtual Network
+      # configuration during 'consolidate'. The rest are application
+      # defined but must be composed to match the CIDR if appropriate.
+      chn-cidr: null
+      chn-gateway: 10.103.5.193
+      chn-dynamic-pool: 10.103.5.224/27
+      chn-static-pool: ""
+      # The VLAN id that the CMN runs over.
+      cmn-bootstrap-vlan: "7"
+      # CMN parameters. The CIDR is taken from the Virtual Network
+      # configuration during 'consolidate'. The rest are application
+      # defined but must be composed to match the CIDR if appropriate.
+      cmn-cidr: null
+      cmn-dynamic-pool: 10.103.5.64/26
+      cmn-external-dns: 10.103.5.61
+      cmn-gateway: 10.103.5.1
+      cmn-gw: null         # Alias of cmn-gateway, populated by consolidate
+      cmn-static-pool: 10.103.5.60/30
+      # The path / name of the system config seed file
+      config: system_config.yaml
+      # The CSM version (major.minor) that is being installed. This will
+      # be set by the 'consolidate' stage based on application
+      # configuration elsewhere.
+      csm-version: null
+      # The following is believed to be unused, but should be left unchanged.
+      docker-image-registry: dtr.dev.cray.com
+      # Not sure what these are, probably best to leave them alone.
+      first-master-hostname: ncn-m002
+      help: "false"
+      # We do not currently support Hill or Mountain cabinets on
+      # vShasta, so leave this at 0.
+      hill-cabinets: "0"
+      # The name / path for HMN connections configuration. If this is
+      # relative, it is relative to the location of the system config
+      # file.
+      hmn-connections: hmn_connections.json
+      # The VLAN id that the HMN runs over.
+      hmn-bootstrap-vlan: "4"
+      # HMN parameters. The CIDR is taken from the Virtual Network
+      # configuration during 'consolidate'. The rest are application
+      # defined but must be composed to match the CIDR if appropriate.
+      hmn-cidr: null
+      hmn-dynamic-pool: 10.94.100.0/24
+      hmn-static-pool: ""
+      # The following CIDRs are for separate Mountain and River cabinet
+      # HMNs that vShasta doesn't currently support. We don't use them,
+      # but they are left here as their default values for CSM in case
+      # we ever want them. Don't change or override them and all should
+      # be well.
+      hmn-mtn-cidr: 10.100.0.0/17 
+      hmn-rvr-cidr: 10.107.0.0/17
+      # The HSN has no VLAN id because it is not on a VLAN. It is still
+      # on a virtual network, but that is hidden in the cluster layer.
+      #
+      # The CIDR will be taken from the Virtual Network
+      # configuration. Everything else is configured here. If it is
+      # present it needs to be compatible with the CIDR.
+      hsn-cidr: null
+      hsn-dynamic-pool: ""
+      hsn-static-pool: ""
+      # The name of the NCN from which CSM installation will take
+      # place. Don't override this value.
+      install-ncn: ncn-m001
+      # This is used for NCN network bonding, which is not supported yet
+      # on vShasta. If it becomes supported, it will need to be part of
+      # the Virtual Network definitions, so it will get set up by the
+      # 'consolidate' phase.
+      install-ncn-bond-members: null
+      # This is either Provider or Site specific. It is configured in
+      # the Provider layer and set up in the 'consolidate' phase.
+      ipv4-resolvers: null
+      # Set this as desired, the default is generally good except under
+      # extraordinary circumstances.
+      k8s-api-auditing-enabled: "false"
+      # This is set to support WLMs. See VSHA-644 which investigates how
+      # to do this on vTDS.
+      macvlan-bootstrap-vlan: "2"
+      # Waiting for input from Chris on this
+      management-net-ips: "0"
+      # Waiting for input from Chris on this
+      manifest-release: ""
+      # vShasta does not yet support Mountain cabinets, so leave this as
+      # it is.
+      mountain-cabinets: "0"
+      # vShasta doesn't currently have the MTL network which is used for
+      # cloud-init of NCNs on hardware, so this setting should have no
+      # effect.
+      mtl-cidr: 10.1.1.0/16
+      # The name / path of the NCN Metadata seed file.
+      ncn-metadata: ncn_metadata.csv
+      # Swtich to true to enable NCN managment node auditing. Generally
+      # leave false.
+      ncn-mgmt-node-auditing-enabled: "false"
+      # The VLANid for the NMN.
+      nmn-bootstrap-vlan: "2"
+      # The CIDR will be taken from the Virtual Network
+      # configuration. Everything else is configured here. If it is
+      # present it needs to be compatible with the CIDR.
+      nmn-cidr: null
+      # vShasta doesn't support Mountain cabinets and does not yet support
+      # cabinet specific networks. Leave nmn-mtn-cidr and nmn-rvr-cidr
+      # set to these default values and don't override them.
+      nmn-mtn-cidr: 10.104.0.0/17
+      nmn-rvr-cidr: 10.106.0.0/17
+      # This dynamic pool is used for access to CSM services. It is a
+      # different network overlay on top of NMN and should not be
+      # overriden because this value is hard coded in CSM in many
+      # places. Just leave it this way.
+      nmn-dynamic-pool: 10.92.100.0/24
+      # The static pool is unused, leave it blank.
+      nmn-static-pool: ""
+      # Waiting for input from Chris on this
+      notify-zones: ""
+      # The NTP peers will be all of the Management nodes (Master,
+      # Worker and Storage). This will be derived from the Cluster
+      # configuration and set up during 'consolidate'.
+      ntp-peers: null
+      # Leave this list empty. There are no NTP pools configured on CSM
+      ntp-pools: []
+      # Set this to be the desired NTP server(s) among the Managment
+      # nodes. The default is here and works.
+      ntp-servers:
+          - ncn-m001
+      # Set this if you want a different NTP timezone. No idea whether
+      # that is a good idea or not. Recommend leaving it alone.
+      ntp-timezone: UTC
+      # Waiting for input from Chris on this
+      primary-server-name: primary
+      # Waiting for input from Chris on this
+      retain-unused-user-network: false
+      # The number of River cabinets (the only kind we support) written
+      # as a string. This will be set up using Application Layer config
+      # from elsewhere by 'consolidate'. That makes it easier to
+      # coordinate with other cabinet related settings.
+      river-cabinets: null
+      # The location of the internal RPM repository for CSM. Leave this
+      # as it is unless you know what you are doing.
+      rpm-repository: https://packages.nmn/repository/shasta-master
+      # Waiting for input from Chris on this
+      secondary-servers: ""
+      # Site connection data used to access the PIT node and NCN-M001
+      # from the site during installation. Not used in vShasta at
+      # present. Since 'site-dns' will be Provider specific, it will be
+      # set up (even though this is unused) by 'consolidate'.
+      site-dns: null
+      # The domain name to be used when setting up the
+      # installation. Leave this as 'internal'.
+      site-domain: internal
+      # Gateway to the site for site connections. Not used. Leave this
+      # default setting alone.
+      site-gw: 192.168.0.1
+      # CIDR for the site network. Not used. Leave this default setting alone.
+      site-ip: 192.168.0.0/24
+      # The name of the NIC for the site network. Not used. Leave this
+      # default setting alone.
+      site-nic: p2p1
+      # vShasta doesn't support Hill cabinets. Leave this default
+      # setting alone.
+      starting-hill-cabinet: "9000"
+      # vShasta doesn't support Mountain cabinets. Leave these default
+      # settings alone.
+      starting-mountain-cabinet: "1000"
+      starting-mountain-nid: "1000"
+      # These will be populated by 'consolidate' from elsewhere in the
+      # Application Layer configuration to facilitate coordination with
+      # other seed files.
+      starting-river-cabinet: "3000"
+      starting-river-nid: "1"
+      # Waiting for input from Chris on this
+      supernet: "true"
+      # Name / path of the Swtich Metadata seed file
+      switch-metadata: switch_metadata.csv
+      # This will be taken from elsewhere in the Application Layer
+      # configuration and set by 'consolidate'.
+      system-name: null
+      # The upstream NTP server, if any for this cluster. This will be
+      # provided by the Provider Layer configuration and set in
+      # 'consolidate' if present.
+      upstream-ntp-server: null
+      # The URL for the internal version 2 registry. Do not change or
+      # override this.
+      v2-registry: https://registry.nmn/
+    # The 'application_node_config' section will populate the
+    # 'application_node_config.yaml' seed file. The primary parameter
+    # here is the 'aliases' map which maps XNames to node names. This is
+    # constructed based on the geometry of the cluster which is known
+    # at the Cluster Layer and available to the Application Layer, so it
+    # is populated automatically by the 'consolidate' phase of the
+    # Application Layer. The rest are configured here.
+    application_node_config:
+      # Map xnames to node names (not for NIDs, only for non-compute
+      # managed nodes (UANs unless your config defines other
+      # kinds). These are built by the 'consolidate' phase from other
+      # config, not specified here.
+      aliases: none
+      # Map application node prefixes to HSM sub-roles. These should
+      # match the naming / subroles of application nodes in your
+      # system. By default vShasta only has UANs. If your configuration
+      # defines other kinds of application nodes in the application
+      # metadata for application nodes, list the prefix to subrole
+      # mapping here.
+      prefix_hsm_subroles:
+        uan: UAN
+      # List application node prefixes. These should match the naming of
+      # application nodes in your system. By default vShasta only has
+      # UANs. If your configuration defines other kinds of application
+      # nodes in the application metadata for application nodes, list
+      # the prefix here.
+      prefixes:
+        - uan
+    # The 'cabinets' section will populate the 'cabinets.yaml' seed
+    # file. The main item here is the list of cabinets, parts of, which
+    # needs to match on geometry information also used to assign xnames
+    # and is constructed by the 'consolidate' phase of the Application
+    # Layer.
+    cabinets:
+      cabinets:
+        # vShasta only supports River cabinets
+        - type: river
+          # The number of River cabinets in the cluster. This is
+          # populated using geometry information during 'consolidate'.
+          total_numnber: null
+          # The starting ID of the River cabinets. This is populated
+          # using geometry information during 'consolidate'.
+          starting_id: null
+          # The cabinets section is a list of cabinets by id and their
+          # HMN and NMN subnet VLANs. Currently, vShasta does not
+          # support these subnets yet, so populating this will do
+          # nothing. The contents listed here are commented out and
+          # shown for example only. Do not populate or uncomment this
+          # until vShasta supports this feature.
+          # cabinets:
+          #  - id: 3000
+          #    nmn_vlan: 3000
+          #    hmn_vlan: 4000
+          #  - id: 3001
+          #    nmn_vlan: 3001
+          #    hmn_vlan: 4001
+    # The 'hmn_connections' section will populate the
+    # 'hmn_connections.json' seed file. This is fully populated by the
+    # 'consolidate' stage of the Application Layer and is included here only
+    # for completeness and to provide a placeholder for this
+    # comment. There is nothing to configure here.
+    hmn_connections: []
+    # The 'ncn_metadata' section will populate the 'ncn_metadata.csv'
+    # seed file. This is fully populated by the 'consolidate' stage of
+    # the Application Layer and is included here only for completeness
+    # and to provide a placeholder for this comment. There is nothing to
+    # configure here.
+    ncn_metadata: []
+    # The 'switch_metadata' section will populate the
+    # 'switch_metadata.csv' seed file. This is fully populated by the
+    # 'consolidate' stage of the Application Layer and is included here
+    # only for completeness and to provide a placeholder for this
+    # comment. There is nothing to configure here.
+    switch_metadata: []
