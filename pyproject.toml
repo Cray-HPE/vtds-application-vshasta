@@ -22,7 +22,7 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 [project]
-name = 'vtds-application-vshasta'
+name = 'vtds_application_vshasta'
 authors = [
     { name = 'Eric Lund', email = 'eric.lund@hpe.com' },
 ]
