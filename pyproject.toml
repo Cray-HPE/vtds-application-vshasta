@@ -48,6 +48,7 @@ dynamic = ['version']
 maintainers = [
     { name = 'Eric Lund', email = 'eric.lund@hpe.com' },
 ]
+readme = { file = 'README.md', content-type = 'text/markdown' }
 requires-python = '>=3.8'
 
 [metadata]
@@ -83,7 +84,6 @@ include = [
 exclude = ['vtds_application_vshasta.tests*']
 
 [tool.setuptools.dynamic]
-readme = { file = ['README.md'], content-type = 'text/markdown' }
 
 # Allows for dynamic versioning via git-tag.
 [tool.setuptools_scm]
