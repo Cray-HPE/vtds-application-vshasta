@@ -1,7 +1,7 @@
 #
 # MIT License
 #
-# (C) Copyright 2025 Hewlett Packard Enterprise Development LP
+# (C) Copyright 2022-2025 Hewlett Packard Enterprise Development LP
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -21,21 +21,16 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 #
-application:
-  # The list of Debian packages to be installed on nodes where the
-  # application deployment script runs.
-  debian_packages:
-    - python3-venv
-  # The list of pip installable python packages to be installed into a
-  # virtual environment on nodes where the application deployment
-  # script runs.
-  #
-  # NOTE: currently none are known, the examples below show what this
-  # might look like though... Each list of dependencies is normally
-  # specific to and grouped by the name of a particular python script
-  # that might be run as part of deployment and needs to be installed.
-  python_deps: []
-#    examples:
-#      - daemonize~=2.5
-#      - flask~=3.0
-#      - requests~=2.32
+name: Check Licenses
+
+on:
+  pull_request:
+
+jobs:
+  license-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: Cray-HPE/license-checker@v2
