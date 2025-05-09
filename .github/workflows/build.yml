@@ -50,7 +50,7 @@ jobs:
         python3 -m build
 
     - name: Setup Jfrog CLI
-      uses: jfrog/setup-jfrog-cli@v3
+      uses: jfrog/setup-jfrog-cli@v4
       env:
         JF_URL: https://artifactory.algol60.net
         JF_USER: ${{ secrets.ARTIFACTORY_ALGOL60_USERNAME }}
