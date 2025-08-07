@@ -31,9 +31,10 @@ classifiers = [
     'Natural Language :: English',
     'Operating System :: POSIX',
     'Programming Language :: Python :: 3 :: Only',
-    'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
 ]
 description = 'Vshasta Application Layer Plugin for the Virtual Test Development System (vTDS) suite'
 dependencies = [
@@ -49,7 +50,7 @@ maintainers = [
     { name = 'Eric Lund', email = 'eric.lund@hpe.com' },
 ]
 readme = { file = 'README.md', content-type = 'text/markdown' }
-requires-python = '>=3.8'
+requires-python = '>=3.9'
 
 [metadata]
 url = 'https://github.com/Cray-HPE/vtds-application-vshasta'
@@ -73,7 +74,7 @@ lint = [
 ]
 test = [
     'pytest~=8.3.3',
-    'pytest-cov~=4.1',
+    'pytest-cov~=6.0',
     'coverage~=7.4',
 ]
 
@@ -94,9 +95,9 @@ exclude = ['vtds_application_vshasta.tests*']
 [build-system]
 build-backend = 'setuptools.build_meta'
 requires = [
-    'setuptools ~= 66.0',
-    'setuptools_scm[toml] ~= 7.1.0',
-    'wheel ~= 0.38.4',
+    'setuptools ~= 75.8',
+    'setuptools_scm[toml] ~= 8.1.0',
+    'wheel ~= 0.45.1',
 ]
 
 [tool.distutils.bdist_wheel]
