@@ -96,7 +96,7 @@ exclude = ['vtds_application_vshasta.tests*']
 build-backend = 'setuptools.build_meta'
 requires = [
     'setuptools ~= 80.9',
-    'setuptools_scm[toml] ~= 8.1.0',
+    'setuptools_scm[toml] ~= 8.3.1',
     'wheel ~= 0.45.1',
 ]
 
