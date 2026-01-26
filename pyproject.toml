@@ -100,7 +100,7 @@ requires = [
     # Setup tools SCM - this comment reduces conflicts with dependabot PRs
     'setuptools_scm[toml] ~= 9.2.0',
     # wheel - this comment reduces conflicts with dependabot PRs
-    'wheel ~= 0.45.1',
+    'wheel ~= 0.46.3',
 ]
 
 [tool.distutils.bdist_wheel]
